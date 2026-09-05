@@ -42,8 +42,9 @@ apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
-    xserver-xorg xserver-xorg-video-all xinit \
-    xfce4 lightdm lightdm-gtk-greeter dbus-x11 polkitd pkexec accountsservice \
+    task-xfce-desktop xfce4-goodies xfce4-terminal thunar thunar-volman \
+    tumbler gvfs gvfs-backends \
+    lightdm lightdm-gtk-greeter dbus-x11 polkitd pkexec accountsservice \
     udisks2 parted dosfstools e2fsprogs ntfs-3g \
     calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner supercat window-size \
@@ -58,9 +59,6 @@ usermod -aG sudo,video,audio,netdev,plugdev vanilla
 
 mkdir -p /home/vanilla/.config
 chown -R vanilla:vanilla /home/vanilla
-printf 'startxfce4\n' > /home/vanilla/.xinitrc
-chown vanilla:vanilla /home/vanilla/.xinitrc
-chmod 644 /home/vanilla/.xinitrc
 
 mkdir -p /etc/lightdm/lightdm.conf.d
 cat > /etc/lightdm/lightdm.conf.d/50-vanilla-autologin.conf <<'LIGHTDM'
@@ -122,10 +120,9 @@ BRANDING
 install -Dm755 /build/scripts/vanillafetch /usr/bin/vanillafetch
 install -Dm644 /build/assets/vanilla-linux.txt /usr/share/vanillafetch/vanilla-linux.txt
 
-# Install the generated Vanilla Linux wallpaper.
+# Install the custom Vanilla Linux wallpaper; keep this custom layer on top of standard XFCE.
 install -Dm644 /build/assets/vanilla-linux-wallpaper.svg /usr/share/backgrounds/vanilla-linux/vanilla-linux-wallpaper.svg
 
-# Make sure the installer has access to disks through udisks2.
 systemctl enable udisks2.service || true
 
 # Launch Calamares through PolicyKit so the graphical installer can obtain root privileges.
@@ -146,9 +143,8 @@ cat > /usr/share/polkit-1/actions/org.vanillalinux.calamares.policy <<'POLKIT'
 </policyconfig>
 POLKIT
 
-# Desktop shortcut explicitly starts Calamares with root privileges.
-mkdir -p /etc/skel/Desktop
-cat > /etc/skel/Desktop/install-vanilla-linux.desktop <<'DESKTOP'
+mkdir -p /usr/share/applications
+cat > /usr/share/applications/install-vanilla-linux.desktop <<'DESKTOP'
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -160,13 +156,13 @@ Terminal=false
 Categories=System;Settings;
 StartupNotify=true
 DESKTOP
-chmod 644 /etc/skel/Desktop/install-vanilla-linux.desktop
+chmod 644 /usr/share/applications/install-vanilla-linux.desktop
 
 mkdir -p /home/vanilla/Desktop
-cp /etc/skel/Desktop/install-vanilla-linux.desktop /home/vanilla/Desktop/install-vanilla-linux.desktop
+cp /usr/share/applications/install-vanilla-linux.desktop /home/vanilla/Desktop/install-vanilla-linux.desktop
 chmod 644 /home/vanilla/Desktop/install-vanilla-linux.desktop
 
-# Configure the live user's XFCE wallpaper.
+# Keep the custom Vanilla Linux wallpaper configuration while letting standard XFCE manage the rest.
 mkdir -p /home/vanilla/.config/xfce4/xfconf/xfce-perchannel-xml
 cat > /home/vanilla/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml <<'XFCE'
 <?xml version="1.0" encoding="UTF-8"?>
