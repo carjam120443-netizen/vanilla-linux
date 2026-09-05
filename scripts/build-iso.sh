@@ -44,7 +44,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
-    xfce4 lightdm calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
+    xfce4 lightdm lightdm-gtk-greeter dbus-x11 calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner supercat window-size \
     dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
     dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
@@ -56,18 +56,22 @@ if ! id -u vanilla >/dev/null 2>&1; then
 fi
 usermod -aG sudo vanilla
 
-# Boot directly into a graphical XFCE session on installed/live boots.
-systemctl enable lightdm || true
-systemctl set-default graphical.target || true
-
-# Automatically log the live session into the unprivileged vanilla account.
+# Configure LightDM explicitly for the live XFCE session.
 mkdir -p /etc/lightdm/lightdm.conf.d
 cat > /etc/lightdm/lightdm.conf.d/50-vanilla-autologin.conf <<'LIGHTDM'
 [Seat:*]
 autologin-user=vanilla
 autologin-user-timeout=0
+autologin-session=xfce
 user-session=xfce
+greeter-session=lightdm-gtk-greeter
 LIGHTDM
+
+# Ensure the display-manager service is enabled even when systemctl is being
+# run inside the build chroot rather than a booted system.
+ln -sf /lib/systemd/system/lightdm.service /etc/systemd/system/display-manager.service
+systemctl enable lightdm || true
+systemctl set-default graphical.target || true
 
 printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
