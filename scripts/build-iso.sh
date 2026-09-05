@@ -3,11 +3,12 @@ set -euo pipefail
 
 BUILD_DIR="/build/work"
 ROOTFS="$BUILD_DIR/rootfs"
+ISO_DIR="$BUILD_DIR/iso"
 OUT_DIR="/build/output"
 SUITE="stable"
 
 rm -rf "$BUILD_DIR" "$OUT_DIR"
-mkdir -p "$ROOTFS" "$OUT_DIR"
+mkdir -p "$ROOTFS" "$ISO_DIR/live" "$ISO_DIR/boot/grub" "$OUT_DIR"
 
 echo "==> Bootstrapping Debian $SUITE"
 debootstrap --variant=minbase "$SUITE" "$ROOTFS" http://deb.debian.org/debian
@@ -31,27 +32,48 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-    linux-image-amd64 \
-    systemd-sysv \
-    systemd-resolved \
-    sudo \
-    network-manager \
-    ca-certificates \
-    curl \
-    wget \
-    git \
-    nano \
-    less \
-    bash-completion
+    linux-image-amd64 systemd-sysv systemd-resolved live-boot \
+    sudo network-manager ca-certificates curl wget git nano less bash-completion
 
 printf 'Vanilla Linux\n' > /etc/hostname
-
+printf 'Vanilla Linux\n' > /etc/issue
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/*
 CHROOT
 
-echo "==> Creating compressed root filesystem"
-mksquashfs "$ROOTFS" "$OUT_DIR/filesystem.squashfs" -comp zstd -noappend
+KERNEL=$(find "$ROOTFS/boot" -maxdepth 1 -type f -name 'vmlinuz-*' | sort | tail -n1)
+INITRD=$(find "$ROOTFS/boot" -maxdepth 1 -type f -name 'initrd.img-*' | sort | tail -n1)
 
-echo "==> Base root filesystem created"
-echo "Output: $OUT_DIR/filesystem.squashfs"
+if [[ -z "$KERNEL" || -z "$INITRD" ]]; then
+    echo "ERROR: Kernel or initramfs was not generated."
+    exit 1
+fi
+
+cp "$KERNEL" "$ISO_DIR/live/vmlinuz"
+cp "$INITRD" "$ISO_DIR/live/initrd.img"
+mksquashfs "$ROOTFS" "$ISO_DIR/live/filesystem.squashfs" -comp zstd -noappend
+
+cat > "$ISO_DIR/boot/grub/grub.cfg" <<'GRUB'
+set timeout=5
+set default=0
+insmod all_video
+insmod gfxterm
+insmod png
+
+menuentry "Vanilla Linux (Live)" {
+    linux /live/vmlinuz boot=live quiet splash
+    initrd /live/initrd.img
+}
+
+menuentry "Vanilla Linux (Live, safe graphics)" {
+    linux /live/vmlinuz boot=live nomodeset
+    initrd /live/initrd.img
+}
+
+menuentry "Reboot" { reboot }
+menuentry "Power Off" { halt }
+GRUB
+
+echo "==> Building hybrid BIOS/UEFI ISO"
+grub-mkrescue -o "$OUT_DIR/vanilla-linux-live.iso" "$ISO_DIR"
+ls -lh "$OUT_DIR/vanilla-linux-live.iso"
