@@ -1,8 +1,8 @@
 # 🍦 Vanilla Linux
 
-> **Debian, but vanilla.**
+> **Debian, but vanilla — a Swiss Army knife for devs and normal users.** 🛠️🍦
 
-Vanilla Linux is a lightweight, clean **Debian-based Linux distribution** built around the idea of keeping the base simple, familiar, and free from unnecessary layers.
+Vanilla Linux is a lightweight, clean **Debian-based Linux distribution** built around the idea of keeping the base simple, familiar, and free from unnecessary layers — while somehow collecting a holy package list capable of doing a little bit of everything. 😂
 
 The name is a little joke — because Linux Mint exists, so obviously we needed the **ice-cream-flavored Debian distro**. 🍦🐧
 
@@ -14,10 +14,13 @@ Vanilla Linux aims to provide a straightforward Debian experience with:
 - 📦 **APT + DPKG** for package management
 - 🚫 **No Ubuntu repositories by default**
 - 🧼 A clean, minimal starting point
+- 🛠️ A growing toolbox for **developers and normal desktop users alike**
 - 💿 A bootable live ISO
 - 🛠️ Automated ISO builds through GitHub Actions
 - 🐳 Reproducible builds using Docker
 - 🔧 A project structure designed to be easy to modify
+
+Basically: **a Swiss Army knife for devs, sysadmins, tinkerers, and regular users who just want their computer to do useful shit.** 😭🔧
 
 ## 💿 Building the ISO
 
@@ -107,7 +110,7 @@ Vanilla Linux is intentionally **boring in the best possible way**.
 
 Use Debian as the foundation, keep the system understandable, avoid unnecessary distro-on-distro layers, and build useful features on top instead of replacing the foundation.
 
-**No Ubuntu base. No mysterious magic. Just Linux. 🍦**
+**No Ubuntu base. No mysterious magic. Just Linux — with a suspiciously large toolbox. 🍦🛠️**
 
 ## 📄 License
 
