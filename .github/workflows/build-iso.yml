@@ -1,0 +1,39 @@
+name: Build Vanilla Linux ISO
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build live ISO
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ISO with Docker
+        run: |
+          set -euxo pipefail
+          docker build -t vanilla-linux-builder .
+          mkdir -p output
+          docker run --privileged --rm \
+            -v "$PWD/output:/build/output" \
+            vanilla-linux-builder
+
+      - name: Verify ISO
+        run: |
+          set -euxo pipefail
+          test -s output/vanilla-linux-live.iso
+          file output/vanilla-linux-live.iso
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanilla-linux-live-iso
+          path: output/vanilla-linux-live.iso
+          if-no-files-found: error
+          retention-days: 14
