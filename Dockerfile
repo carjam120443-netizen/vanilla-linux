@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
+# Keep the ISO builder and Vanilla Linux branding inside the image.
 COPY scripts/ /build/scripts/
-RUN chmod +x /build/scripts/*.sh
+COPY assets/ /build/assets/
+RUN chmod +x /build/scripts/*.sh /build/scripts/vanillafetch
 
 ENTRYPOINT ["/build/scripts/build-iso.sh"]
