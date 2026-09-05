@@ -21,15 +21,13 @@ deb http://deb.debian.org/debian ${SUITE}-updates main contrib non-free-firmware
 deb http://security.debian.org/debian-security ${SUITE}-security main contrib non-free-firmware
 EOF
 
-# debootstrap/systemd may leave resolv.conf as a symlink; replace it with a usable copy.
 rm -f "$ROOTFS/etc/resolv.conf"
 cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
-# Files copied into the Docker builder are outside the chroot. Copy the fetch
-# utility and its logo into the rootfs so the chroot can install them.
 mkdir -p "$ROOTFS/build/scripts" "$ROOTFS/build/assets"
 cp /build/scripts/vanillafetch "$ROOTFS/build/scripts/vanillafetch"
 cp /build/assets/vanilla-linux.txt "$ROOTFS/build/assets/vanilla-linux.txt"
+cp /build/assets/vanilla-linux-wallpaper.svg "$ROOTFS/build/assets/vanilla-linux-wallpaper.svg"
 chmod 755 "$ROOTFS/build/scripts/vanillafetch"
 
 mount --bind /dev "$ROOTFS/dev"
@@ -46,26 +44,24 @@ apt-get install -y --no-install-recommends \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
     xserver-xorg xserver-xorg-video-all xinit \
     xfce4 lightdm lightdm-gtk-greeter dbus-x11 polkitd pkexec accountsservice \
+    udisks2 parted dosfstools e2fsprogs ntfs-3g \
     calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner supercat window-size \
     dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
     dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
     dvi2ps-fontdata-tbank dvi2ps-fontdata-three
 
-# Create the unprivileged live-session account so LightDM has a valid user.
 if ! id -u vanilla >/dev/null 2>&1; then
     adduser --disabled-password --gecos "Vanilla Linux Live User" vanilla
 fi
 usermod -aG sudo,video,audio,netdev,plugdev vanilla
 
-# Make sure the live user has a valid home and X session configuration.
 mkdir -p /home/vanilla/.config
 chown -R vanilla:vanilla /home/vanilla
 printf 'startxfce4\n' > /home/vanilla/.xinitrc
 chown vanilla:vanilla /home/vanilla/.xinitrc
 chmod 644 /home/vanilla/.xinitrc
 
-# Configure LightDM explicitly for the live XFCE session.
 mkdir -p /etc/lightdm/lightdm.conf.d
 cat > /etc/lightdm/lightdm.conf.d/50-vanilla-autologin.conf <<'LIGHTDM'
 [Seat:*]
@@ -76,7 +72,6 @@ user-session=xfce
 greeter-session=lightdm-gtk-greeter
 LIGHTDM
 
-# Ensure LightDM is the system display manager and the live image boots graphically.
 ln -sf /lib/systemd/system/lightdm.service /etc/systemd/system/display-manager.service
 systemctl enable lightdm || true
 systemctl set-default graphical.target || true
@@ -85,8 +80,6 @@ printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
 
 # Brand Calamares as Vanilla Linux instead of the Debian installer.
-# calamares-settings-debian installs Debian branding by default, so override it
-# with a local branding component. The existing Debian artwork is reused for now.
 if [[ -f /etc/calamares/settings.conf ]]; then
     sed -i 's/^branding: debian$/branding: vanilla/' /etc/calamares/settings.conf
 fi
@@ -126,11 +119,34 @@ images:
  productWelcome: "welcome.png"
 BRANDING
 
-# Install Vanilla Linux fetch utility and its logo.
 install -Dm755 /build/scripts/vanillafetch /usr/bin/vanillafetch
 install -Dm644 /build/assets/vanilla-linux.txt /usr/share/vanillafetch/vanilla-linux.txt
 
-# Add a clear XFCE desktop shortcut for the graphical installer.
+# Install the generated Vanilla Linux wallpaper.
+install -Dm644 /build/assets/vanilla-linux-wallpaper.svg /usr/share/backgrounds/vanilla-linux/vanilla-linux-wallpaper.svg
+
+# Make sure the installer has access to disks through udisks2.
+systemctl enable udisks2.service || true
+
+# Launch Calamares through PolicyKit so the graphical installer can obtain root privileges.
+mkdir -p /usr/share/polkit-1/actions
+cat > /usr/share/polkit-1/actions/org.vanillalinux.calamares.policy <<'POLKIT'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN" "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+  <action id="org.vanillalinux.calamares">
+    <description>Install Vanilla Linux</description>
+    <message>Authentication is required to install Vanilla Linux.</message>
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+      <allow_inactive>auth_admin_keep</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+</policyconfig>
+POLKIT
+
+# Desktop shortcut explicitly starts Calamares with root privileges.
 mkdir -p /etc/skel/Desktop
 cat > /etc/skel/Desktop/install-vanilla-linux.desktop <<'DESKTOP'
 [Desktop Entry]
@@ -138,7 +154,7 @@ Version=1.0
 Type=Application
 Name=Install Vanilla Linux
 Comment=Install Vanilla Linux to your computer
-Exec=calamares
+Exec=pkexec calamares
 Icon=calamares
 Terminal=false
 Categories=System;Settings;
@@ -146,10 +162,28 @@ StartupNotify=true
 DESKTOP
 chmod 644 /etc/skel/Desktop/install-vanilla-linux.desktop
 
-# Make the shortcut available to the live desktop immediately.
 mkdir -p /home/vanilla/Desktop
 cp /etc/skel/Desktop/install-vanilla-linux.desktop /home/vanilla/Desktop/install-vanilla-linux.desktop
 chmod 644 /home/vanilla/Desktop/install-vanilla-linux.desktop
+
+# Configure the live user's XFCE wallpaper.
+mkdir -p /home/vanilla/.config/xfce4/xfconf/xfce-perchannel-xml
+cat > /home/vanilla/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml <<'XFCE'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="last-image" type="string" value="/usr/share/backgrounds/vanilla-linux/vanilla-linux-wallpaper.svg"/>
+          <property name="image-style" type="int" value="5"/>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>
+XFCE
+chown -R vanilla:vanilla /home/vanilla/.config
 chown -R 1000:1000 /home/vanilla 2>/dev/null || true
 
 apt-get clean
@@ -167,7 +201,6 @@ fi
 cp "$KERNEL" "$ISO_DIR/live/vmlinuz"
 cp "$INITRD" "$ISO_DIR/live/initrd.img"
 
-# Do not include live virtual filesystems (/proc, /sys, /dev) in SquashFS.
 echo "==> Unmounting virtual filesystems before SquashFS"
 umount -lf "$ROOTFS/dev" 2>/dev/null || true
 umount -lf "$ROOTFS/proc" 2>/dev/null || true
