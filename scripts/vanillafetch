@@ -1,0 +1,52 @@
+#!/bin/bash
+set -euo pipefail
+
+VERSION="1.0.0"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+LOGO_FILE="$SCRIPT_DIR/../assets/vanilla-linux.txt"
+
+if [[ ! -f "$LOGO_FILE" ]]; then
+    LOGO_FILE="/usr/share/vanillafetch/vanilla-linux.txt"
+fi
+
+if [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+fi
+
+NAME="${PRETTY_NAME:-${NAME:-Linux}}"
+KERNEL="$(uname -sr)"
+HOST="$(hostname)"
+UPTIME="$(uptime -p 2>/dev/null || true)"
+SHELL_NAME="${SHELL##*/}"
+CPU="$(awk -F: '/model name/ {gsub(/^ +/, "", $2); print $2; exit}' /proc/cpuinfo 2>/dev/null || true)"
+RAM="$(free -h 2>/dev/null | awk '/^Mem:/ {print $3 " / " $2}' || true)"
+
+printf '\n'
+if [[ -f "$LOGO_FILE" ]]; then
+    paste "$LOGO_FILE" <(cat <<EOF
+  Vanilla Linux
+  ──────────────
+  OS       $NAME
+  Host     $HOST
+  Kernel   $KERNEL
+  Desktop  ${XDG_CURRENT_DESKTOP:-XFCE}
+  Shell    ${SHELL_NAME:-unknown}
+  CPU      ${CPU:-unknown}
+  Memory   ${RAM:-unknown}
+  Uptime   ${UPTIME:-unknown}
+  Version  $VERSION
+EOF
+)
+else
+    echo "Vanilla Linux"
+    echo "OS       $NAME"
+    echo "Host     $HOST"
+    echo "Kernel   $KERNEL"
+    echo "Desktop  ${XDG_CURRENT_DESKTOP:-XFCE}"
+    echo "Shell    ${SHELL_NAME:-unknown}"
+    echo "CPU      ${CPU:-unknown}"
+    echo "Memory   ${RAM:-unknown}"
+    echo "Uptime   ${UPTIME:-unknown}"
+    echo "Version  $VERSION"
+fi
+printf '\n'
