@@ -45,7 +45,7 @@ apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
     xserver-xorg xserver-xorg-video-all xinit \
-    xfce4 lightdm lightdm-gtk-greeter dbus-x11 policykit-1 accountsservice \
+    xfce4 lightdm lightdm-gtk-greeter dbus-x11 polkitd pkexec accountsservice \
     calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner supercat window-size \
     dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
