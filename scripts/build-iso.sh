@@ -25,6 +25,13 @@ EOF
 rm -f "$ROOTFS/etc/resolv.conf"
 cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
+# Files copied into the Docker builder are outside the chroot. Copy the fetch
+# utility and its logo into the rootfs so the chroot can install them.
+mkdir -p "$ROOTFS/build/scripts" "$ROOTFS/build/assets"
+cp /build/scripts/vanillafetch "$ROOTFS/build/scripts/vanillafetch"
+cp /build/assets/vanilla-linux.txt "$ROOTFS/build/assets/vanilla-linux.txt"
+chmod 755 "$ROOTFS/build/scripts/vanillafetch"
+
 mount --bind /dev "$ROOTFS/dev"
 mount -t proc /proc "$ROOTFS/proc"
 mount -t sysfs /sys "$ROOTFS/sys"
