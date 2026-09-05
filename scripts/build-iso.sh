@@ -61,6 +61,28 @@ printf 'Vanilla Linux\n' > /etc/issue
 install -Dm755 /build/scripts/vanillafetch /usr/bin/vanillafetch
 install -Dm644 /build/assets/vanilla-linux.txt /usr/share/vanillafetch/vanilla-linux.txt
 
+# Add a clear XFCE desktop shortcut for the graphical installer.
+mkdir -p /etc/skel/Desktop
+cat > /etc/skel/Desktop/install-vanilla-linux.desktop <<'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Install Vanilla Linux
+Comment=Install Vanilla Linux to your computer
+Exec=calamares
+Icon=calamares
+Terminal=false
+Categories=System;Settings;
+StartupNotify=true
+DESKTOP
+chmod 644 /etc/skel/Desktop/install-vanilla-linux.desktop
+
+# Make the shortcut available to the live desktop immediately.
+mkdir -p /home/vanilla/Desktop
+cp /etc/skel/Desktop/install-vanilla-linux.desktop /home/vanilla/Desktop/install-vanilla-linux.desktop
+chmod 644 /home/vanilla/Desktop/install-vanilla-linux.desktop
+chown -R 1000:1000 /home/vanilla 2>/dev/null || true
+
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/*
 CHROOT
