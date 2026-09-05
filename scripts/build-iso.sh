@@ -50,9 +50,24 @@ apt-get install -y --no-install-recommends \
     dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
     dvi2ps-fontdata-tbank dvi2ps-fontdata-three
 
+# Create the unprivileged live-session account so LightDM has a valid user.
+if ! id -u vanilla >/dev/null 2>&1; then
+    adduser --disabled-password --gecos "Vanilla Linux Live User" vanilla
+fi
+usermod -aG sudo vanilla
+
 # Boot directly into a graphical XFCE session on installed/live boots.
 systemctl enable lightdm || true
 systemctl set-default graphical.target || true
+
+# Automatically log the live session into the unprivileged vanilla account.
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat > /etc/lightdm/lightdm.conf.d/50-vanilla-autologin.conf <<'LIGHTDM'
+[Seat:*]
+autologin-user=vanilla
+autologin-user-timeout=0
+user-session=xfce
+LIGHTDM
 
 printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
