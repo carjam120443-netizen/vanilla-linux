@@ -7,7 +7,8 @@ ISO_DIR="$BUILD_DIR/iso"
 OUT_DIR="/build/output"
 SUITE="stable"
 
-rm -rf "$BUILD_DIR" "$OUT_DIR"
+# /build/output is a host-mounted Docker volume in CI, so never rm -rf it.
+rm -rf "$BUILD_DIR"
 mkdir -p "$ROOTFS" "$ISO_DIR/live" "$ISO_DIR/boot/grub" "$OUT_DIR"
 
 echo "==> Bootstrapping Debian $SUITE"
