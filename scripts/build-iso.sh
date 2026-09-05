@@ -84,6 +84,48 @@ systemctl set-default graphical.target || true
 printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
 
+# Brand Calamares as Vanilla Linux instead of the Debian installer.
+# calamares-settings-debian installs Debian branding by default, so override it
+# with a local branding component. The existing Debian artwork is reused for now.
+if [[ -f /etc/calamares/settings.conf ]]; then
+    sed -i 's/^branding: debian$/branding: vanilla/' /etc/calamares/settings.conf
+fi
+mkdir -p /etc/calamares/branding/vanilla
+if [[ -d /etc/calamares/branding/debian ]]; then
+    cp -a /etc/calamares/branding/debian/. /etc/calamares/branding/vanilla/
+fi
+cat > /etc/calamares/branding/vanilla/branding.desc <<'BRANDING'
+---
+componentName: vanilla
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 800px,580px
+windowPlacement: center
+
+strings:
+ productName: Vanilla Linux
+ shortProductName: Vanilla
+ version: 1.0
+ shortVersion: 1.0
+ versionedName: Vanilla Linux 1.0
+ shortVersionedName: Vanilla Linux 1.0
+ bootloaderEntryName: Vanilla Linux
+ productUrl: https://github.com/carjam120443-netizen/vanilla-linux
+ supportUrl: https://github.com/carjam120443-netizen/vanilla-linux/issues
+ knownIssuesUrl: https://github.com/carjam120443-netizen/vanilla-linux/issues
+ releaseNotesUrl: https://github.com/carjam120443-netizen/vanilla-linux
+ donateUrl:
+
+sidebar: widget
+navigation: widget
+
+images:
+ productLogo: "debian-logo.png"
+ productIcon: "debian-logo.png"
+ productWelcome: "welcome.png"
+BRANDING
+
 # Install Vanilla Linux fetch utility and its logo.
 install -Dm755 /build/scripts/vanillafetch /usr/bin/vanillafetch
 install -Dm644 /build/assets/vanilla-linux.txt /usr/share/vanillafetch/vanilla-linux.txt
