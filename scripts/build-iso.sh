@@ -45,6 +45,11 @@ systemctl set-default graphical.target || true
 
 printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
+
+# Install Vanilla Linux fetch utility and its logo.
+install -Dm755 /build/scripts/vanillafetch /usr/bin/vanillafetch
+install -Dm644 /build/assets/vanilla-linux.txt /usr/share/vanillafetch/vanilla-linux.txt
+
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/*
 CHROOT
