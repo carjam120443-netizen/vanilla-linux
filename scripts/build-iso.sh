@@ -44,7 +44,9 @@ apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
-    xfce4 lightdm lightdm-gtk-greeter dbus-x11 calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
+    xserver-xorg xserver-xorg-video-all xinit \
+    xfce4 lightdm lightdm-gtk-greeter dbus-x11 policykit-1 accountsservice \
+    calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf subuser \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner supercat window-size \
     dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
     dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
@@ -54,7 +56,14 @@ apt-get install -y --no-install-recommends \
 if ! id -u vanilla >/dev/null 2>&1; then
     adduser --disabled-password --gecos "Vanilla Linux Live User" vanilla
 fi
-usermod -aG sudo vanilla
+usermod -aG sudo,video,audio,netdev,plugdev vanilla
+
+# Make sure the live user has a valid home and X session configuration.
+mkdir -p /home/vanilla/.config
+chown -R vanilla:vanilla /home/vanilla
+printf 'startxfce4\n' > /home/vanilla/.xinitrc
+chown vanilla:vanilla /home/vanilla/.xinitrc
+chmod 644 /home/vanilla/.xinitrc
 
 # Configure LightDM explicitly for the live XFCE session.
 mkdir -p /etc/lightdm/lightdm.conf.d
@@ -67,8 +76,7 @@ user-session=xfce
 greeter-session=lightdm-gtk-greeter
 LIGHTDM
 
-# Ensure the display-manager service is enabled even when systemctl is being
-# run inside the build chroot rather than a booted system.
+# Ensure LightDM is the system display manager and the live image boots graphically.
 ln -sf /lib/systemd/system/lightdm.service /etc/systemd/system/display-manager.service
 systemctl enable lightdm || true
 systemctl set-default graphical.target || true
