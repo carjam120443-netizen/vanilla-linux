@@ -44,7 +44,10 @@ apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
-    xfce4 lightdm
+    xfce4 lightdm \
+    dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
+    dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
+    dvi2ps-fontdata-tbank dvi2ps-fontdata-three
 
 # Boot directly into a graphical XFCE session on installed/live boots.
 systemctl enable lightdm || true
