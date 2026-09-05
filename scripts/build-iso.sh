@@ -21,6 +21,8 @@ deb http://deb.debian.org/debian ${SUITE}-updates main contrib non-free-firmware
 deb http://security.debian.org/debian-security ${SUITE}-security main contrib non-free-firmware
 EOF
 
+# debootstrap/systemd may leave resolv.conf as a symlink; replace it with a usable copy.
+rm -f "$ROOTFS/etc/resolv.conf"
 cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
 mount --bind /dev "$ROOTFS/dev"
@@ -34,7 +36,12 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
-    sudo network-manager ca-certificates curl wget git nano less bash-completion
+    sudo network-manager ca-certificates curl wget git nano less bash-completion \
+    xfce4 lightdm
+
+# Boot directly into a graphical XFCE session on installed/live boots.
+systemctl enable lightdm || true
+systemctl set-default graphical.target || true
 
 printf 'Vanilla Linux\n' > /etc/hostname
 printf 'Vanilla Linux\n' > /etc/issue
