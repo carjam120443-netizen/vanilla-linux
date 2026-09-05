@@ -52,6 +52,13 @@ fi
 
 cp "$KERNEL" "$ISO_DIR/live/vmlinuz"
 cp "$INITRD" "$ISO_DIR/live/initrd.img"
+
+# Do not include live virtual filesystems (/proc, /sys, /dev) in SquashFS.
+echo "==> Unmounting virtual filesystems before SquashFS"
+umount -lf "$ROOTFS/dev" 2>/dev/null || true
+umount -lf "$ROOTFS/proc" 2>/dev/null || true
+umount -lf "$ROOTFS/sys" 2>/dev/null || true
+
 mksquashfs "$ROOTFS" "$ISO_DIR/live/filesystem.squashfs" -comp zstd -noappend
 
 cat > "$ISO_DIR/boot/grub/grub.cfg" <<'GRUB'
