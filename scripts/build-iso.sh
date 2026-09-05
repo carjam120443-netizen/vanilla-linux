@@ -44,7 +44,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     linux-image-amd64 systemd-sysv systemd-resolved live-boot \
     sudo network-manager ca-certificates curl wget git nano less bash-completion \
-    xfce4 lightdm calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot \
+    xfce4 lightdm calamares calamares-settings-debian adduser apt-offline aptitude backup-manager adb fastboot dnf \
     ino-headers cjs 9menu abbtr acl 7zip 2ping shelltestrunner \
     dvi2ps-fontdata-a2n dvi2ps-fontdata-ja dvi2ps-fontdata-n2a \
     dvi2ps-fontdata-ptexfake dvi2ps-fontdata-rsp \
